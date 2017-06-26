@@ -39,11 +39,16 @@ class QLearningAgent(ReinforcementAgent):
 
     "*** YOUR CODE HERE ***"
     #{'alpha': 0.5, 'actionFn': <function <lambda> at 0x7fb1db35f2a8>, 'gamma': 0.9, 'epsilon': 0.3}
-    self.alpha=args['alpha']
-    self.actionFn=args['actionFn']
-    self.gamma=args['gamma']
-    self.epsilon=.75 #args['epsilon']
+    if 'actionFn' in args.keys():
+      self.actionFn=args['actionFn']
+    if 'gamma' in args.keys():
+      self.gamma=args['gamma']
+    if 'alpha' in args.keys():
+      self.alpha=args['alpha']
+    if 'epsilon' in args.keys():
+      self.epsilon=args['epsilon']
     self.Q = util.Counter()
+    self.st = util.Counter()
 
   def getQValue(self, state, action):
     """
@@ -57,7 +62,6 @@ class QLearningAgent(ReinforcementAgent):
     return self.Q[(state,action)]
     util.raiseNotDefined()
 
-
   def getValue(self, state):
     """
       Returns max_action Q(state,action)
@@ -70,19 +74,19 @@ class QLearningAgent(ReinforcementAgent):
     return self.getQValue(state,a)
     util.raiseNotDefined()
 
-  def best_action_from_state(self,state):
+  def best_qa_from_state(self,state):
     actions = self.getLegalActions(state)
     action = None
+    qvalue = 0
     if len(actions)>0:
-      action=max([(self.Q[(state,a)],a) for a in actions])[1]
-    return action
+      qvalue,action=max([(self.Q[(state,a)],a) for a in actions])
+    return qvalue,action
+
+  def best_action_from_state(self,state):
+    return self.best_qa_from_state(state)[1]
 
   def best_qvalue_from_state(self,state):
-    actions = self.getLegalActions(state)
-    q = 0
-    if len(actions)>0:
-      q=max([self.Q[(state,a)] for a in actions])
-    return q
+    return self.best_qa_from_state(state)[0]
 
   def getPolicy(self, state):
     """
@@ -106,14 +110,24 @@ class QLearningAgent(ReinforcementAgent):
       HINT: To pick randomly from a list, use random.choice(list)
     """
     # Pick Action
-    legalActions = self.getLegalActions(state)
+    actions = self.getLegalActions(state)
     action = None
     "*** YOUR CODE HERE ***"
-    if len(legalActions)!=0:
+    def find_least_traveled_road(st,state,actions):
+            road=actions[0]
+            cnt=st[(state,road)]
+            for a in actions:
+              if st[(state,a)]<=cnt:
+                cnt=st[(state,a)]
+                road=a
+            return road
+    if len(actions)!=0:
           if util.flipCoin(self.epsilon):
-            action=random.choice(legalActions)
+            #action=find_least_traveled_road(self.st,state,actions)
+            action=random.choice(actions)  # this is winner
           else:
             action=self.getPolicy(state)
+    self.st[(state,action)]+=1
     return action
     util.raiseNotDefined()
 
@@ -130,18 +144,17 @@ class QLearningAgent(ReinforcementAgent):
     "*** YOUR CODE HERE ***"
     alpha = self.alpha
     qvalue = self.Q[(state,action)]
-    
     sample = reward + self.gamma * self.best_qvalue_from_state(nextState)
     qvalue = (1-alpha) * qvalue + alpha * sample
     self.Q[(state,action)] = qvalue
-    """
-    if reward!=0:
-      print state,action,nextState,reward
-      print self.Q
-      raw_input('...')
-    """
-
     #util.raiseNotDefined()
+
+  def setEpsilon(self,epsilon):
+    self.epsilon=epsilon
+  def setLearningRate(self,alpha):
+    self.alpha=alpha
+  def setDiscount(self,gamma):
+    self.gamma=gamma
 
 class PacmanQAgent(QLearningAgent):
   "Exactly the same as QLearningAgent, but with different default parameters"
