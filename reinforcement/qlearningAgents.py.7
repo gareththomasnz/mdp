@@ -206,7 +206,7 @@ class ApproximateQAgent(PacmanQAgent):
     # You might want to initialize weights here.
     "*** YOUR CODE HERE ***"
     self.features = SimpleExtractor()
-    self.wi = [1.0]*3
+    self.wi = 1.0
     self.lastQ = 0
 
   def getQValue(self, state, action):
@@ -220,10 +220,7 @@ class ApproximateQAgent(PacmanQAgent):
       return self.lastQ
     objs = self.features.getFeatures(state,action)
     fi = objs.values()
-    #print objs.viewitems()
-    # objs ==> ('closest-food', 0.012244897959183673), ('bias', 0.1), ('#-of-ghosts-1-step-away', 0.0)
-    #q  = self.wi[0] * fi[0] + self.wi[1] * fi[1] + self.wi[2] * fi[2]
-    q  = self.wi[2] * fi[2]
+    q  = self.wi * fi[2]
     self.lastQ = q
     return q
     #util.raiseNotDefined()
@@ -245,9 +242,10 @@ class ApproximateQAgent(PacmanQAgent):
     oldQ = self.getQValue(state,action)
     diff = (reward + self.gamma * maxQ) - oldQ
     #print 'diff=',diff
-    self.wi[0]= self.wi[0] + self.alpha * diff * fi[0] 
-    self.wi[1]= self.wi[1] + self.alpha * diff * fi[1] 
-    self.wi[2]= self.wi[2] + self.alpha * diff * fi[2] 
+    #self.wi[0]= self.wi[0] + self.alpha * diff * fi[0] 
+    #self.wi[1]= self.wi[1] + self.alpha * diff * fi[1] 
+    #self.wi[2]= self.wi[2] + self.alpha * diff * fi[2] 
+    self.wi= self.wi + self.alpha * diff * fi[2] 
     #print 'updated weights:',self.wi,fi
     #util.raiseNotDefined()
 
