@@ -39,11 +39,21 @@ class QLearningAgent(ReinforcementAgent):
 
     "*** YOUR CODE HERE ***"
     #{'alpha': 0.5, 'actionFn': <function <lambda> at 0x7fb1db35f2a8>, 'gamma': 0.9, 'epsilon': 0.3}
-    self.alpha=args['alpha']
-    self.actionFn=args['actionFn']
-    self.gamma=args['gamma']
+    if args.has_key('alpha'):
+      self.alpha=args['alpha']
+    if args.has_key('actionFn'):
+      self.actionFn=args['actionFn']
+    if args.has_key('gamma'):
+      self.gamma=args['gamma']
     self.epsilon=.75 #args['epsilon']
     self.Q = util.Counter()
+
+  def setEpsilon(self,epsilon):
+    self.epsilon= epsilon
+  def setLearningRate(self,alpha):
+    self.alpha=alpha
+  def setDiscount(self,gamma):
+    self.gamma=gamma
 
   def getQValue(self, state, action):
     """
