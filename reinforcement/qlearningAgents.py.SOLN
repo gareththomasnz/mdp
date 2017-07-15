@@ -86,7 +86,19 @@ class QLearningAgent(ReinforcementAgent):
     actions = self.getLegalActions(state)
     action = None
     if len(actions)>0:
-      action=max([(self.getQValue(state,a),a) for a in actions])[1]
+      pairs=[(self.getQValue(state,a),a) for a in actions]
+      #print pairs
+      bestq=max(pairs)[0]
+      aaa=[]
+      for q,a in pairs:
+        if q==bestq:
+          aaa.append(a)
+      if len(aaa)>0:
+        action=random.choice(aaa)
+        #print 'random choice:',action
+      else:
+        action=max(pairs)[1]
+        #print 'only max:',action
     return action
 
   def best_qvalue_from_state(self,state):
