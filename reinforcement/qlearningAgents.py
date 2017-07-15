@@ -39,15 +39,23 @@ class QLearningAgent(ReinforcementAgent):
 
     "*** YOUR CODE HERE ***"
     #{'alpha': 0.5, 'actionFn': <function <lambda> at 0x7fb1db35f2a8>, 'gamma': 0.9, 'epsilon': 0.3}
-    if 'actionFn' in args.keys():
-      self.actionFn=args['actionFn']
-    if 'gamma' in args.keys():
-      self.gamma=args['gamma']
-    if 'alpha' in args.keys():
+    if args.has_key('alpha'):
       self.alpha=args['alpha']
-    if 'epsilon' in args.keys():
-      self.epsilon=args['epsilon']
+    if args.has_key('actionFn'):
+      self.actionFn=args['actionFn']
+    if args.has_key('gamma'):
+      self.gamma=args['gamma']
+    if args.has_key('epsilon'):
+      self.epsilon=args['epsilon'] # comment out epsilon=.75, so that PacmanQAgent can imporve scores!!
     self.Q = util.Counter()
+
+  #add these setter functions for Crawler to work
+  def setEpsilon(self,epsilon):
+    self.epsilon= epsilon
+  def setLearningRate(self,alpha):
+    self.alpha=alpha
+  def setDiscount(self,gamma):
+    self.gamma=gamma
 
   def getQValue(self, state, action):
     """
@@ -61,6 +69,7 @@ class QLearningAgent(ReinforcementAgent):
     return self.Q[(state,action)]
     util.raiseNotDefined()
 
+
   def getValue(self, state):
     """
       Returns max_action Q(state,action)
@@ -73,19 +82,19 @@ class QLearningAgent(ReinforcementAgent):
     return self.getQValue(state,a)
     util.raiseNotDefined()
 
-  def best_qa_from_state(self,state):
+  def best_action_from_state(self,state):
     actions = self.getLegalActions(state)
     action = None
-    qvalue = 0
     if len(actions)>0:
-      qvalue,action=max([(self.getQValue(state,a),a) for a in actions])
-    return qvalue,action
-
-  def best_action_from_state(self,state):
-    return self.best_qa_from_state(state)[1]
+      action=max([(self.getQValue(state,a),a) for a in actions])[1]
+    return action
 
   def best_qvalue_from_state(self,state):
-    return self.best_qa_from_state(state)[0]
+    actions = self.getLegalActions(state)
+    q = 0
+    if len(actions)>0:
+      q=max([self.getQValue(state,a) for a in actions])
+    return q
 
   def getPolicy(self, state):
     """
@@ -94,21 +103,7 @@ class QLearningAgent(ReinforcementAgent):
       you should return None.
     """
     "*** YOUR CODE HERE ***"
-    actions = self.getLegalActions(state)
-    if len(actions)>0:
-      choices=[(self.getQValue(state,a),a) for a in actions]
-      mq,ma=max(choices)
-      # in case of max q-value has tie, we randomly choose one!
-      tie=[]
-      for q,a in choices:
-        if q==mq:         # check for tied max!!
-          tie.append(a)
-      if len(tie)>1:      # now we definitly have tie ...
-        ma=random.choice(tie)  # pick random one ...
-        #print 'we have tie ups:',tie, ', we pick',a
-    else:
-      ma=None
-    return ma
+    return self.best_action_from_state(state)
     util.raiseNotDefined()
 
   def getAction(self, state):
@@ -123,13 +118,12 @@ class QLearningAgent(ReinforcementAgent):
       HINT: To pick randomly from a list, use random.choice(list)
     """
     # Pick Action
-    actions = self.getLegalActions(state)
+    legalActions = self.getLegalActions(state)
     action = None
     "*** YOUR CODE HERE ***"
-    if len(actions)!=0:
+    if len(legalActions)!=0:
           if util.flipCoin(self.epsilon):
-            #action=find_least_traveled_road(self.st,state,actions)
-            action=random.choice(actions)  # this is winner
+            action=random.choice(legalActions)
           else:
             action=self.getPolicy(state)
     return action
@@ -148,17 +142,18 @@ class QLearningAgent(ReinforcementAgent):
     "*** YOUR CODE HERE ***"
     alpha = self.alpha
     qvalue = self.getQValue(state,action)
+    
     sample = reward + self.gamma * self.best_qvalue_from_state(nextState)
     qvalue = (1-alpha) * qvalue + alpha * sample
     self.Q[(state,action)] = qvalue
-    #util.raiseNotDefined()
+    """
+    if reward!=0:
+      print state,action,nextState,reward
+      print self.Q
+      raw_input('...')
+    """
 
-  def setEpsilon(self,epsilon):
-    self.epsilon=epsilon
-  def setLearningRate(self,alpha):
-    self.alpha=alpha
-  def setDiscount(self,gamma):
-    self.gamma=gamma
+    #util.raiseNotDefined()
 
 class PacmanQAgent(QLearningAgent):
   "Exactly the same as QLearningAgent, but with different default parameters"
@@ -191,6 +186,7 @@ class PacmanQAgent(QLearningAgent):
     self.doAction(state,action)
     return action
 
+
 class ApproximateQAgent(PacmanQAgent):
   """
      ApproximateQLearningAgent
@@ -205,9 +201,6 @@ class ApproximateQAgent(PacmanQAgent):
 
     # You might want to initialize weights here.
     "*** YOUR CODE HERE ***"
-    self.features = SimpleExtractor()
-    self.wi = [1.0]*3
-    self.lastQ = 0
 
   def getQValue(self, state, action):
     """
@@ -215,41 +208,14 @@ class ApproximateQAgent(PacmanQAgent):
       where * is the dotProduct operator
     """
     "*** YOUR CODE HERE ***"
-    #print 'ACITON...',action
-    if action is None:
-      return self.lastQ
-    objs = self.features.getFeatures(state,action)
-    fi = objs.values()
-    #print objs.viewitems()
-    # objs ==> ('closest-food', 0.012244897959183673), ('bias', 0.1), ('#-of-ghosts-1-step-away', 0.0)
-    #q  = self.wi[0] * fi[0] + self.wi[1] * fi[1] + self.wi[2] * fi[2]
-    q  = self.wi[2] * fi[2]
-    self.lastQ = q
-    return q
-    #util.raiseNotDefined()
+    util.raiseNotDefined()
 
   def update(self, state, action, nextState, reward):
     """
        Should update your weights based on transition
     """
     "*** YOUR CODE HERE ***"
-    # get latest features fi (environment or states)
-    objs = self.features.getFeatures(state,action)
-    fi = objs.values()
-    #print objs.viewitems()
-    # get maxQ for nextState (best action for the next state)
-    max_a = self.getPolicy(nextState)      # choose the best aciton
-    maxQ = self.getQValue(nextState,max_a) # get the best Q score
-    #print max_a,maxQ
-    # update weights (Approximate Q's)
-    oldQ = self.getQValue(state,action)
-    diff = (reward + self.gamma * maxQ) - oldQ
-    #print 'diff=',diff
-    self.wi[0]= self.wi[0] + self.alpha * diff * fi[0] 
-    self.wi[1]= self.wi[1] + self.alpha * diff * fi[1] 
-    self.wi[2]= self.wi[2] + self.alpha * diff * fi[2] 
-    #print 'updated weights:',self.wi,fi
-    #util.raiseNotDefined()
+    util.raiseNotDefined()
 
   def final(self, state):
     "Called at the end of each game."
@@ -260,5 +226,4 @@ class ApproximateQAgent(PacmanQAgent):
     if self.episodesSoFar == self.numTraining:
       # you might want to print your weights here for debugging
       "*** YOUR CODE HERE ***"
-      print 'final wieghts:',self.wi
       pass

@@ -45,9 +45,11 @@ class QLearningAgent(ReinforcementAgent):
       self.actionFn=args['actionFn']
     if args.has_key('gamma'):
       self.gamma=args['gamma']
-    self.epsilon=.75 #args['epsilon']
+    if args.has_key('epsilon'):
+      self.epsilon=args['epsilon'] # comment out epsilon=.75, so that PacmanQAgent can imporve scores!!
     self.Q = util.Counter()
 
+  #add these setter functions for Crawler to work
   def setEpsilon(self,epsilon):
     self.epsilon= epsilon
   def setLearningRate(self,alpha):
@@ -84,14 +86,14 @@ class QLearningAgent(ReinforcementAgent):
     actions = self.getLegalActions(state)
     action = None
     if len(actions)>0:
-      action=max([(self.Q[(state,a)],a) for a in actions])[1]
+      action=max([(self.getQValue(state,a),a) for a in actions])[1]
     return action
 
   def best_qvalue_from_state(self,state):
     actions = self.getLegalActions(state)
     q = 0
     if len(actions)>0:
-      q=max([self.Q[(state,a)] for a in actions])
+      q=max([self.getQValue(state,a) for a in actions])
     return q
 
   def getPolicy(self, state):
@@ -139,7 +141,7 @@ class QLearningAgent(ReinforcementAgent):
     """
     "*** YOUR CODE HERE ***"
     alpha = self.alpha
-    qvalue = self.Q[(state,action)]
+    qvalue = self.getQValue(state,action)
     
     sample = reward + self.gamma * self.best_qvalue_from_state(nextState)
     qvalue = (1-alpha) * qvalue + alpha * sample
